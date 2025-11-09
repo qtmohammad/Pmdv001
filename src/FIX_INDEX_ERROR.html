@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 حل خطأ Firestore Index - Fix Index Error</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .error-box {
+            background: #fee;
+            border: 2px solid #fcc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #c33;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .steps {
+            margin: 30px 0;
+        }
+        
+        .step {
+            background: #f9f9f9;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .step:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+        
+        .step-content {
+            display: inline-block;
+            vertical-align: middle;
+            width: calc(100% - 60px);
+        }
+        
+        .big-button {
+            display: block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 20px 40px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin: 30px auto;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+        }
+        
+        .big-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+        
+        .big-button:active {
+            transform: translateY(-1px);
+        }
+        
+        .link-box {
+            background: #f0f0f0;
+            border: 2px dashed #999;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            direction: ltr;
+        }
+        
+        .success-box {
+            background: #efe;
+            border: 2px solid #cfc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .success-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+        
+        .timer {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .subtitle {
+                font-size: 16px;
+            }
+            
+            .big-button {
+                font-size: 16px;
+                padding: 15px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">🚨</div>
+            <h1>حل خطأ Firestore Index</h1>
+            <p class="subtitle">Fix Firestore Index Error</p>
+        </div>
+        
+        <div class="error-box">
+            <strong>❌ الخطأ / Error:</strong><br>
+            Error getting today tickets count: FirebaseError: [code=failed-precondition]:<br>
+            The query requires an index.
+        </div>
+        
+        <div class="timer">
+            ⏱️ الحل يستغرق 30 ثانية فقط!<br>
+            Solution takes only 30 seconds!
+        </div>
+        
+        <a href="https://console.firebase.google.com/v1/r/project/mobhm-l/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9tb2JobS1sL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9zdXBwb3J0VGlja2V0cy9pbmRleGVzL18QARoKCgZ1c2VySWQQARoNCgljcmVhdGVkQXQQARoMCghfX25hbWVfXxAB" 
+           class="big-button" 
+           target="_blank">
+            🚀 اضغط هنا لحل المشكلة فوراً<br>
+            Click Here to Fix Now
+        </a>
+        
+        <div class="steps">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333;">
+                ✅ الخطوات / Steps
+            </h2>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <strong>اضغط الزر الأزرق أعلاه</strong><br>
+                    Click the blue button above
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <strong>في الصفحة التي تفتح، اضغط زر "Create Index"</strong><br>
+                    On the page that opens, click "Create Index" button
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                    <strong>انتظر رسالة النجاح (10 ثوانٍ)</strong><br>
+                    Wait for success message (10 seconds)
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4</span>
+                <div class="step-content">
+                    <strong>انتظر 2-3 دقائق حتى يصبح Index "Enabled"</strong><br>
+                    Wait 2-3 minutes until Index becomes "Enabled"
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">5</span>
+                <div class="step-content">
+                    <strong>أعد تحميل صفحة التطبيق</strong><br>
+                    Reload the application page
+                </div>
+            </div>
+        </div>
+        
+        <div class="success-box">
+            <div class="success-icon">🎉</div>
+            <h3 style="color: #2a2; margin-bottom: 10px;">انتهى! الخطأ سيختفي</h3>
+            <p style="color: #666;">Done! Error will disappear</p>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 10px;">
+            <h3 style="margin-bottom: 15px;">📋 أو انسخ الرابط يدوياً / Or Copy Link Manually:</h3>
+            <div class="link-box" id="linkBox">
+                https://console.firebase.google.com/v1/r/project/mobhm-l/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9tb2JobS1sL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9zdXBwb3J0VGlja2V0cy9pbmRleGVzL18QARoKCgZ1c2VySWQQARoNCgljcmVhdGVkQXQQARoMCghfX25hbWVfXxAB
+            </div>
+            <button onclick="copyLink()" style="
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 10px 30px;
+                border-radius: 25px;
+                cursor: pointer;
+                font-size: 16px;
+                display: block;
+                margin: 15px auto 0;
+            ">
+                📋 نسخ الرابط / Copy Link
+            </button>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #e3f2fd; border-radius: 10px; text-align: center;">
+            <p style="color: #1976d2; font-size: 14px;">
+                💡 <strong>لماذا نحتاج هذا؟</strong><br>
+                نظام حد التذاكر اليومية يحتاج Composite Index للعمل<br>
+                <br>
+                <strong>Why do we need this?</strong><br>
+                Daily ticket limit system needs Composite Index to work
+            </p>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center; color: #999; font-size: 14px;">
+            <p>
+                للمساعدة، راجع: 🚨_FIX_INDEX_ERROR_NOW.md<br>
+                For help, see: 🚨_FIX_INDEX_ERROR_NOW.md
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        function copyLink() {
+            const link = 'https://console.firebase.google.com/v1/r/project/mobhm-l/firestore/indexes?create_composite=Ck5wcm9qZWN0cy9tb2JobS1sL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9zdXBwb3J0VGlja2V0cy9pbmRleGVzL18QARoKCgZ1c2VySWQQARoNCgljcmVhdGVkQXQQARoMCghfX25hbWVfXxAB';
+            
+            navigator.clipboard.writeText(link).then(() => {
+                alert('✅ تم نسخ الرابط!\nLink copied!\n\nالآن افتحه في المتصفح\nNow open it in browser');
+            }).catch(err => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ تم نسخ الرابط!\nLink copied!');
+            });
+        }
+        
+        // Auto-focus animation
+        const button = document.querySelector('.big-button');
+        setInterval(() => {
+            button.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 500);
+        }, 3000);
+    </script>
+</body>
+</html>

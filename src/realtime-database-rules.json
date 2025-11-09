@@ -1,0 +1,42 @@
+{
+  "rules": {
+    "licenses": {
+      "apps": {
+        "$productId": {
+          "$buyerId": {
+            ".read": "auth != null && auth.uid == $buyerId",
+            ".write": "auth != null && auth.uid == $buyerId",
+            ".validate": "newData.hasChildren(['isActive', 'expiryType', 'appIds'])",
+            "isActive": {
+              ".validate": "newData.isBoolean()"
+            },
+            "expiryType": {
+              ".validate": "newData.isString() && (newData.val() == 'lifetime' || newData.val() == 'date')"
+            },
+            "expiryDate": {
+              ".validate": "newData.isString()"
+            },
+            "appIds": {
+              ".validate": "newData.isString() || (newData.hasChildren() && newData.val().length <= 1)"
+            }
+          }
+        }
+      },
+      "domains": {
+        "$productId": {
+          "$buyerId": {
+            ".read": "auth != null && auth.uid == $buyerId",
+            ".write": "auth != null && auth.uid == $buyerId",
+            ".validate": "newData.hasChildren(['isActive', 'domains'])",
+            "isActive": {
+              ".validate": "newData.isBoolean()"
+            },
+            "domains": {
+              ".validate": "newData.isString() || newData.hasChildren()"
+            }
+          }
+        }
+      }
+    }
+  }
+}
