@@ -10,11 +10,10 @@ import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Label } from './ui/label';
-import { MessageSquare, Plus, Send, Clock, CheckCircle, XCircle, Bell, AlertCircle, Trash2, ImagePlus, X } from 'lucide-react';
+import { MessageSquare, Plus, Send, Clock, CheckCircle, XCircle, AlertCircle, Trash2, ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { collection, addDoc, query, where, getDocs, orderBy, onSnapshot, doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, onSnapshot, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { requestNotificationPermission, saveFCMToken } from '../lib/fcm';
 import { getMembershipSettings } from '../lib/membershipSettings';
 import { MultiImageUploader } from './MultiImageUploader';
 import { uploadToCloudinary, CLOUDINARY_FOLDERS } from '../lib/cloudinary';
@@ -58,7 +57,6 @@ export const SupportPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [dailyLimits, setDailyLimits] = useState({ premium: 2, regular: 1 });
   const [todayTicketsCount, setTodayTicketsCount] = useState(0);
   const [canCreateTicket, setCanCreateTicket] = useState(true);
@@ -82,7 +80,6 @@ export const SupportPage: React.FC = () => {
   useEffect(() => {
     if (userData?.uid) {
       loadTickets();
-      checkNotificationPermission();
       loadDailyLimits();
       checkTodayTickets();
     }
@@ -132,25 +129,6 @@ export const SupportPage: React.FC = () => {
     }
   };
 
-  const checkNotificationPermission = () => {
-    if ('Notification' in window) {
-      setNotificationsEnabled(Notification.permission === 'granted');
-    }
-  };
-
-  const handleEnableNotifications = async () => {
-    try {
-      const token = await requestNotificationPermission();
-      if (token && userData?.uid) {
-        await saveFCMToken(userData.uid, token);
-        setNotificationsEnabled(true);
-        toast.success(t('notificationsEnabled'));
-      }
-    } catch (error) {
-      console.error('Error enabling notifications:', error);
-      toast.error(t('notificationsEnableFailed'));
-    }
-  };
 
   const loadTickets = async () => {
     if (!userData?.uid) return;
@@ -305,8 +283,7 @@ export const SupportPage: React.FC = () => {
         attachments: attachments.length > 0 ? attachments : [],
         status: 'open',
         createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        needsAdminNotification: true
+        updatedAt: Timestamp.now()
       };
 
       const docRef = await addDoc(collection(db, 'supportTickets'), ticketData);
@@ -393,11 +370,10 @@ export const SupportPage: React.FC = () => {
       
       await addDoc(collection(db, 'supportTickets', selectedTicket.id, 'messages'), messageData);
 
-      // Update ticket status and set notification flag
+      // Update ticket status
       await updateDoc(doc(db, 'supportTickets', selectedTicket.id), {
         status: 'open',
-        updatedAt: Timestamp.now(),
-        needsAdminNotification: true
+        updatedAt: Timestamp.now()
       });
 
       setNewMessage('');
@@ -486,24 +462,6 @@ export const SupportPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {!notificationsEnabled && (
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-          <CardContent className="py-4">
-            <div className="flex items-start gap-3">
-              <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
-                  {t('enableNotificationsForUpdates')}
-                </p>
-                <Button size="sm" onClick={handleEnableNotifications}>
-                  {t('enableNotifications')}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">

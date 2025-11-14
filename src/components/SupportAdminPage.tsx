@@ -10,11 +10,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Label } from './ui/label';
-import { MessageSquare, Send, Clock, CheckCircle, XCircle, User, Mail, Bell, Trash2, ImagePlus, X } from 'lucide-react';
+import { MessageSquare, Send, Clock, CheckCircle, XCircle, User, Mail, Trash2, ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { collection, query, getDocs, orderBy, onSnapshot, doc, updateDoc, addDoc, Timestamp, where, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { requestNotificationPermission, saveFCMToken, sendNotification } from '../lib/fcm';
+import { ADMIN_UIDS } from '../contexts/AuthContext';
 import { ImageLightbox } from './ImageLightbox';
 import { uploadToCloudinary } from '../lib/cloudinary';
 
@@ -57,7 +57,6 @@ export const SupportAdminPage: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [activeTab, setActiveTab] = useState('open');
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
   const [replyImage, setReplyImage] = useState<ImageData | null>(null);
@@ -69,9 +68,7 @@ export const SupportAdminPage: React.FC = () => {
 
   useEffect(() => {
     loadTickets();
-    checkNotificationPermission();
-    setupNotificationListener();
-  }, []);
+  }, [userData]);
 
   useEffect(() => {
     if (selectedTicket) {
@@ -80,55 +77,6 @@ export const SupportAdminPage: React.FC = () => {
     }
   }, [selectedTicket]);
 
-  const checkNotificationPermission = () => {
-    if ('Notification' in window) {
-      setNotificationsEnabled(Notification.permission === 'granted');
-    }
-  };
-
-  const handleEnableNotifications = async () => {
-    try {
-      const token = await requestNotificationPermission();
-      if (token && userData?.uid) {
-        await saveFCMToken(userData.uid, token, true); // true = isAdmin
-        setNotificationsEnabled(true);
-        toast.success(t('notificationsEnabled'));
-      }
-    } catch (error) {
-      console.error('Error enabling notifications:', error);
-      toast.error(t('notificationsEnableFailed'));
-    }
-  };
-
-  const setupNotificationListener = () => {
-    // Listen for new tickets that need notification
-    const q = query(
-      collection(db, 'supportTickets'),
-      where('needsAdminNotification', '==', true)
-    );
-
-    onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach(async (change) => {
-        if (change.type === 'added' || change.type === 'modified') {
-          const ticket = { id: change.doc.id, ...change.doc.data() } as Ticket;
-          
-          // Show browser notification
-          if (Notification.permission === 'granted') {
-            new Notification(t('newTicketNotification'), {
-              body: `${ticket.userName}: ${ticket.subject}`,
-              icon: '/icon.png',
-              badge: '/badge.png'
-            });
-          }
-
-          // Clear notification flag
-          await updateDoc(doc(db, 'supportTickets', ticket.id), {
-            needsAdminNotification: false
-          });
-        }
-      });
-    });
-  };
 
   const loadTickets = async () => {
     try {
@@ -244,17 +192,8 @@ export const SupportAdminPage: React.FC = () => {
       // Update ticket status to 'replied'
       await updateDoc(doc(db, 'supportTickets', selectedTicket.id), {
         status: 'replied',
-        updatedAt: Timestamp.now(),
-        needsUserNotification: true
+        updatedAt: Timestamp.now()
       });
-
-      // Send notification to user
-      await sendNotification(
-        selectedTicket.userId,
-        t('newReplyNotification'),
-        `${t('admin')}: ${newMessage.trim().substring(0, 100)}`,
-        false // isAdmin = false (send to user)
-      );
 
       setNewMessage('');
       setReplyImage(null);
@@ -394,24 +333,6 @@ export const SupportAdminPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {!notificationsEnabled && (
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-          <CardContent className="py-4">
-            <div className="flex items-start gap-3">
-              <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
-                  {t('enableNotificationsForNewTickets')}
-                </p>
-                <Button size="sm" onClick={handleEnableNotifications}>
-                  {t('enableNotifications')}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <div>
         <h1 className="text-3xl">{t('supportAdmin')}</h1>
         <p className="text-muted-foreground mt-1">{t('supportAdminDescription')}</p>

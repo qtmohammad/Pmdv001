@@ -62,7 +62,8 @@ export const ManageBuyersPage: React.FC = () => {
   const [selectedUserProduct, setSelectedUserProduct] = useState<UserProduct | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    email: ''
+    email: '',
+    membershipType: 'regular' as 'premium' | 'regular'
   });
   const [assignData, setAssignData] = useState({
     productId: '',
@@ -128,26 +129,34 @@ export const ManageBuyersPage: React.FC = () => {
     }
 
     try {
-      await addDoc(collection(db, 'buyers'), {
+      // Add to invitedMembers instead of buyers
+      // They will be moved to buyers when they register/login
+      await addDoc(collection(db, 'invitedMembers'), {
         name: formData.name,
         email: formData.email,
+        membershipType: formData.membershipType,
         products: [],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        isInvited: true
       });
 
-      toast.success(t('buyerAddedSuccess'));
+      toast.success(t('memberInvitedSuccess'));
       setAddDialogOpen(false);
-      setFormData({ name: '', email: '' });
+      setFormData({ name: '', email: '', membershipType: 'regular' });
       loadData();
     } catch (error) {
-      console.error('Error adding buyer:', error);
-      toast.error(t('failedToAddBuyer'));
+      console.error('Error inviting member:', error);
+      toast.error(t('failedToInviteMember'));
     }
   };
 
   const openEditDialog = (buyer: Buyer) => {
     setSelectedBuyer(buyer);
-    setFormData({ name: buyer.name, email: buyer.email });
+    setFormData({ 
+      name: buyer.name, 
+      email: buyer.email,
+      membershipType: buyer.membershipType || 'regular'
+    });
     setEditDialogOpen(true);
   };
 
@@ -158,6 +167,7 @@ export const ManageBuyersPage: React.FC = () => {
       await updateDoc(doc(db, 'buyers', selectedBuyer.id), {
         name: formData.name,
         email: formData.email,
+        membershipType: formData.membershipType,
         updatedAt: new Date().toISOString()
       });
 
