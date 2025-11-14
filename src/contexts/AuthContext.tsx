@@ -55,7 +55,7 @@ export const useAuth = () => {
 };
 
 // List of admin UIDs - modify this to set admin users
-const ADMIN_UIDS = ['TH2TF7maQaWA8Q7YpKAKk6Yvbp02'];
+export const ADMIN_UIDS = ['TH2TF7maQaWA8Q7YpKAKk6Yvbp02'];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -157,31 +157,108 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    
+    // Check if user was registered but their data is still in invitedMembers
+    const invitedQuery = query(collection(db, 'invitedMembers'), where('email', '==', email));
+    const invitedSnapshot = await getDocs(invitedQuery);
+    
+    if (!invitedSnapshot.empty) {
+      const invitedMemberData = invitedSnapshot.docs[0].data();
+      const invitedDocId = invitedSnapshot.docs[0].id;
+      
+      // Move data from invitedMembers to buyers
+      await setDoc(doc(db, 'buyers', userCredential.user.uid), {
+        ...invitedMemberData,
+        name: userCredential.user.displayName || invitedMemberData.name,
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        registeredAt: new Date().toISOString(),
+        products: invitedMemberData?.products || [],
+        membershipType: invitedMemberData?.membershipType || 'regular',
+        isAdmin: ADMIN_UIDS.includes(userCredential.user.uid) || invitedMemberData?.isAdmin === true
+      });
+      
+      // Delete from invitedMembers
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'invitedMembers', invitedDocId));
+    }
+    
+    // Also check for legacy buyer documents and clean them up
+    const legacyBuyersQuery = query(collection(db, 'buyers'), where('email', '==', email));
+    const legacyBuyersSnapshot = await getDocs(legacyBuyersQuery);
+    
+    for (const legacyDoc of legacyBuyersSnapshot.docs) {
+      if (legacyDoc.id !== userCredential.user.uid) {
+        try {
+          const { deleteDoc } = await import('firebase/firestore');
+          await deleteDoc(legacyDoc.ref);
+        } catch (error) {
+          console.warn('Could not delete legacy buyer document:', error);
+        }
+      }
+    }
   };
 
   const register = async (email: string, password: string, name: string) => {
-    // Check if email is in buyers list
-    const buyersQuery = query(collection(db, 'buyers'), where('email', '==', email));
-    const buyersSnapshot = await getDocs(buyersQuery);
+    // First, check if email is in invitedMembers list
+    const invitedQuery = query(collection(db, 'invitedMembers'), where('email', '==', email));
+    const invitedSnapshot = await getDocs(invitedQuery);
     
-    if (buyersSnapshot.empty) {
-      // Note: Error messages in AuthContext are caught and displayed through translation keys
-      // The actual translation happens in the component that catches this error
-      throw new Error('EMAIL_NOT_AUTHORIZED');
+    let invitedMemberData = null;
+    let invitedDocId = null;
+    let legacyBuyerDocId = null;
+    
+    if (!invitedSnapshot.empty) {
+      // Email found in invitedMembers
+      invitedMemberData = invitedSnapshot.docs[0].data();
+      invitedDocId = invitedSnapshot.docs[0].id;
+    } else {
+      // Check if email is in buyers list (legacy support)
+      const buyersQuery = query(collection(db, 'buyers'), where('email', '==', email));
+      const buyersSnapshot = await getDocs(buyersQuery);
+      
+      if (buyersSnapshot.empty) {
+        throw new Error('EMAIL_NOT_AUTHORIZED');
+      }
+      
+      // Use existing buyer data and store the doc ID for cleanup
+      invitedMemberData = buyersSnapshot.docs[0].data();
+      legacyBuyerDocId = buyersSnapshot.docs[0].id;
     }
 
+    // Create user account
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
     
-    // Update buyer document with uid
-    const buyerDoc = buyersSnapshot.docs[0];
+    // Create buyer document with invited member data
     await setDoc(doc(db, 'buyers', userCredential.user.uid), {
-      ...buyerDoc.data(),
+      ...invitedMemberData,
       name,
       uid: userCredential.user.uid,
-      registeredAt: new Date().toISOString()
+      email,
+      registeredAt: new Date().toISOString(),
+      products: invitedMemberData?.products || [],
+      membershipType: invitedMemberData?.membershipType || 'regular',
+      isAdmin: ADMIN_UIDS.includes(userCredential.user.uid) || invitedMemberData?.isAdmin === true
     });
+    
+    // Delete from invitedMembers if it was there
+    if (invitedDocId) {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'invitedMembers', invitedDocId));
+    }
+    
+    // Also delete legacy buyer document if it exists (it's replaced by the UID-based one)
+    // Legacy buyer docs use email-based IDs, not UIDs
+    if (legacyBuyerDocId) {
+      try {
+        const { deleteDoc } = await import('firebase/firestore');
+        await deleteDoc(doc(db, 'buyers', legacyBuyerDocId));
+      } catch (error) {
+        console.warn('Could not delete legacy buyer document:', error);
+      }
+    }
   };
 
   const logout = async () => {
